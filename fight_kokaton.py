@@ -177,9 +177,10 @@ def main():
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
     bombs=[]#爆弾用の空リスト
+    beams=[]#ビーム用の空リスト
     for _ in range(NUM_OF_BOMBS):#NUM_OF_BOMBSを5を代入して定義しておく。
         bombs.append(Bomb((255,0,0),10))
-    beam = None  # ゲーム初期化時にはビームは存在しない
+    #beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
     score = Score()
@@ -189,7 +190,7 @@ def main():
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                beams.append(Beam(bird))#beamsリストにappend
         screen.blit(bg_img, [0, 0])
         
         if bomb in bombs:#bombsにはnoneがない
@@ -202,20 +203,20 @@ def main():
                 pg.display.update()
                 time.sleep(1)
                 return
-        
-        for i,bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突していたら
-                    beam = None
+        for i, bomb in enumerate(bombs):
+            for j, beam in enumerate(beams):
+                if beam is not None and beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突していたら
+                    beams[j] = None#リストの要素一つずつに対して、爆弾と衝突判定、衝突した要素をNoneにする
                     bombs[i] = None
                     bird.change_img(6, screen)#こうかとんが喜ぶ
                     score.add_point()  #爆弾を打ち落としたらスコアアップ(1点)するループ
-
+        
+        beams=[beam for beam in beams if beam is not None and check_bound(beam.rct)[0]]#noneでないものをビームリストからリストに更新,画面の範囲外に出たらリストから削除する
         bombs=[bomb for bomb in bombs if bomb is not None]#noneでないものを爆弾リストからリストに更新
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        if beam is not None:  # ビームが存在するときだけ
-           beam.update(screen) 
+        for beam in beams:#ビームの一つずつにupdate
+            beam.update(screen)
         for bomb in bombs:#爆弾の一つずつにupdate
            bomb.update(screen)
         score.update(screen)# updateメソッドを呼び出してスコアを描画するループ
@@ -229,3 +230,4 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+
