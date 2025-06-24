@@ -10,6 +10,7 @@ WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 NUM_OF_BOMBS = 5  # 画面に出現させる爆弾の数
 
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
