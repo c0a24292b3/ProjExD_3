@@ -84,29 +84,29 @@ class Bird:
         screen.blit(self.img, self.rct)
 
 
-# ビームクラス:
-    # """
-    # こうかとんが放つビームに関するクラス
-    # """
-    # def イニシャライザ(self, bird:"Bird"):
-    #     """
-    #     ビーム画像Surfaceを生成する
-    #     引数 bird：ビームを放つこうかとん（Birdインスタンス）
-    #     """
-    #     self.img = pg.画像のロード(f"fig/beam.png")
-    #     self.rct = self.img.Rectの取得()
-    #     self.ビームの中心縦座標 = こうかとんの中心縦座標
-    #     self.ビームの左座標 = こうかとんの右座標
-    #     self.vx, self.vy = +5, 0
+class Beam:
+    """
+    こうかとんが放つビームに関するクラス
+    """
+    def __init__(self, bird:"Bird"):
+        """
+        ビーム画像Surfaceを生成する
+        引数 bird：ビームを放つこうかとん（Birdインスタンス）
+        """
+        self.img = pg.image.load(f"fig/beam.png")#beam画像取得
+        self.rct = self.img.get_rect()#beam座標取得
+        self.rct.centery = bird.rct.centery#こうかとんの中心縦座標
+        self.rct.left = bird.rct.right#こうかとんの右座標
+        self.vx, self.vy = +5, 0#横速度5,縦速度0
 
-    # def update(self, screen: pg.Surface):
-    #     """
-    #     ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-    #     引数 screen：画面Surface
-    #     """
-    #     if check_bound(self.rct) == (True, True):
-    #         self.rct.move_ip(self.vx, self.vy)
-    #         screen.blit(self.img, self.rct)    
+    def update(self, screen: pg.Surface):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        if check_bound(self.rct) == (True, True):#画面内か判定
+            self.rct.move_ip(self.vx, self.vy)#速度ベクトル
+            screen.blit(self.img, self.rct)    #画面更新
 
 
 class Bomb:
@@ -141,21 +141,21 @@ class Bomb:
 
 
 def main():
-    pg.display.set_caption("たたかえ！こうかとん")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))    
-    bg_img = pg.image.load("fig/pg_bg.jpg")
-    bird = Bird((300, 200))
-    bomb = Bomb((255, 0, 0), 10)
+    pg.display.set_caption("たたかえ！こうかとん")#タイトル
+    screen = pg.display.set_mode((WIDTH, HEIGHT))    #画面surface
+    bg_img = pg.image.load("fig/pg_bg.jpg")#画像surface
+    bird = Bird((300, 200))#こうかとん作成
+    bomb = Bomb((255, 0, 0), 10)#爆弾作成
     beam = None  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
     while True:
         for event in pg.event.get():
-            if event.type == pg.QUIT:
+            if event.type == pg.QUIT:#×ボタンで終了
                 return
-            # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-            #     # スペースキー押下でBeamクラスのインスタンス生成
-            #     beam = Beam(bird)            
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:#スペースキーが押されているか判定
+                # スペースキー押下でBeamクラスのインスタンス生成
+                beam = Beam(bird)     #birdをbeamに渡す       
         screen.blit(bg_img, [0, 0])
         
         if bird.rct.colliderect(bomb.rct):
@@ -167,7 +167,8 @@ def main():
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        # beam.update(screen)   
+        if beam is not None:#ビームがあるときだけ。
+            beam.update(screen)   #beam.updateにscreen
         bomb.update(screen)
         pg.display.update()
         tmr += 1
