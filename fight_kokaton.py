@@ -2,6 +2,7 @@ import os
 import random
 import sys
 import time
+import math
 import pygame as pg
 
 
@@ -57,6 +58,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire = (+5, 0)#こうかとんの向きを表すタプル,self.dire=(+5,0)を定義(デフォルト右向き)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -82,9 +84,9 @@ class Bird:
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self.dire = tuple(sum_mv)#合計移動量sum_mvが[0,0]でないとき、self.direをsum_mvの値で更新する。
             self.img = __class__.imgs[tuple(sum_mv)]
         screen.blit(self.img, self.rct)
-
 
 class Beam:
     """
@@ -95,12 +97,15 @@ class Beam:
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん（Birdインスタンス）
         """
-        self.img = pg.image.load("fig/beam.png")
-        self.rct = self.img.get_rect()
-        self.rct.centery = bird.rct.centery
-        self.rct.left = bird.rct.right  # ビームの左座標＝こうかとんの右座標
-        self.vx, self.vy = +5, 0
 
+        self.vx,self.vy=bird.dire#Birdのdireにアクセスし，こうかとんが向いている方向をvx, vyに代入
+        theta = math.atan2(-self.vy, self.vx)#math.atan2(-vy, vx)で，直交座標(x, -y)から極座標の角度Θに変換
+        deg = math.degrees(theta)  ## • math.degrees(Θ)で弧度法から度数法に変換し，rotozoomで回転
+        img0 = pg.image.load("fig/beam.png")
+        self.img = pg.transform.rotozoom(img0, deg, 1.0)  # rotozoomで回転
+        self.rct = self.img.get_rect()
+        self.rct.centerx = bird.rct.centerx + bird.rct.width * self.vx // 5
+        self.rct.centery = bird.rct.centery + bird.rct.height * self.vy // 5#こうかとんのrctのwidthとheightおよび向いている方向を考慮した初期配置
     def update(self, screen: pg.Surface):
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
