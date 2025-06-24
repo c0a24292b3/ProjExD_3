@@ -168,7 +168,27 @@ class Score:
         スコアに1点加算
         """
         self.score += 1
+class Explosion:
+    """
+    爆発を表示するクラス。
+    """
+                # 元のexplosion.gifと上下左右にflipしたものの2つのSurfaceをリストに格納
+            #     爆発した爆弾のrct.centerに座標を設定
+            #     表示時間（爆発時間）lifeを設定
+    def __init__(self, center: tuple[int, int]):
+        img0 = pg.image.load("fig/explosion.gif")#画像surface
+        img1 = pg.transform.flip(img0, True, True)#上下左右にflipさせたもの。
+        self.imgs = [img0, img1]  # 2つのsurfaceをリストに格納
+        self.img = self.imgs[0]
+        self.rct = self.img.get_rect()#爆発した爆弾の座標取得
+        self.rct.center = center#rct.centerに設定。
+        self.life=10#表示時間(爆発時間)の設定。
 
+    def update(self, screen: pg.Surface):#updateメソッド
+        self.life -= 1 #爆発経過時間lifeを１減算
+        self.img = self.imgs[self.life % 2]#交互に切り替える。
+        screen.blit(self.img, self.rct)
+        
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
@@ -178,6 +198,7 @@ def main():
     bomb = Bomb((255, 0, 0), 10)
     bombs=[]#爆弾用の空リスト
     beams=[]#ビーム用の空リスト
+    explosions=[]#爆発用の空リスト
     for _ in range(NUM_OF_BOMBS):#NUM_OF_BOMBSを5を代入して定義しておく。
         bombs.append(Bomb((255,0,0),10))
     #beam = None  # ゲーム初期化時にはビームは存在しない
@@ -205,12 +226,14 @@ def main():
                 return
         for i, bomb in enumerate(bombs):
             for j, beam in enumerate(beams):
-                if beam is not None and beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突していたら
-                    beams[j] = None#リストの要素一つずつに対して、爆弾と衝突判定、衝突した要素をNoneにする
-                    bombs[i] = None
-                    bird.change_img(6, screen)#こうかとんが喜ぶ
-                    score.add_point()  #爆弾を打ち落としたらスコアアップ(1点)するループ
-        
+                    if beam is not None and beam.rct.colliderect(bomb.rct):  # ビームと爆弾が衝突していたら
+                        beams[j] = None#リストの要素一つずつに対して、爆弾と衝突判定、衝突した要素をNoneにする
+                        bombs[i] = None
+                        bird.change_img(6, screen)#こうかとんが喜ぶ
+                        score.add_point()  #爆弾を打ち落としたらスコアアップ(1点)するループ
+                        explosions.append(Explosion(bomb.rct.center)) #リストにappend
+
+        explosions=[explosion for explosion in explosions if explosion.life > 0]#lifeが0より大きいExplosionインスタンスだけのリストにする。
         beams=[beam for beam in beams if beam is not None and check_bound(beam.rct)[0]]#noneでないものをビームリストからリストに更新,画面の範囲外に出たらリストから削除する
         bombs=[bomb for bomb in bombs if bomb is not None]#noneでないものを爆弾リストからリストに更新
         key_lst = pg.key.get_pressed()
@@ -218,7 +241,9 @@ def main():
         for beam in beams:#ビームの一つずつにupdate
             beam.update(screen)
         for bomb in bombs:#爆弾の一つずつにupdate
-           bomb.update(screen)
+            bomb.update(screen)
+        for explosion in explosions:#爆発の一つずつにupdate
+            explosion.update(screen)
         score.update(screen)# updateメソッドを呼び出してスコアを描画するループ
         pg.display.update()
         tmr += 1
